@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timezone, timedelta
 from sqlalchemy import or_
+from zoneinfo import ZoneInfo
 import re
 import os
 
@@ -23,6 +24,7 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=7)
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
+IST = ZoneInfo('Asia/Kolkata')
 
 # ─── Models ───────────────────────────────────────────────────────────────────
 
@@ -249,19 +251,23 @@ def _normalize_due_date(due_date):
 def is_task_overdue(task):
     if not task.due_date or task.status == 'done':
         return False
+    now_utc = datetime.now(timezone.utc)
     if task.due_date.tzinfo:
-        return task.due_date < datetime.now(timezone.utc)
-    # Naive datetime is treated as local wall-clock.
-    return task.due_date < datetime.now()
+        due_utc = task.due_date.astimezone(timezone.utc)
+    else:
+        # Treat timezone-less values as IST wall-clock time.
+        due_utc = task.due_date.replace(tzinfo=IST).astimezone(timezone.utc)
+    return due_utc < now_utc
 
 def is_due_within_next_24h(task):
     if not task.due_date or task.status == 'done':
         return False
+    now_utc = datetime.now(timezone.utc)
     if task.due_date.tzinfo:
-        now_utc = datetime.now(timezone.utc)
-        return now_utc <= task.due_date <= (now_utc + timedelta(hours=24))
-    now_local = datetime.now()
-    return now_local <= task.due_date <= (now_local + timedelta(hours=24))
+        due_utc = task.due_date.astimezone(timezone.utc)
+    else:
+        due_utc = task.due_date.replace(tzinfo=IST).astimezone(timezone.utc)
+    return now_utc <= due_utc <= (now_utc + timedelta(hours=24))
 
 def _has_recent_due_soon_notification(user_id, task_id):
     cutoff = datetime.now(timezone.utc) - timedelta(hours=12)
