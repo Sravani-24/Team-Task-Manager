@@ -1160,7 +1160,7 @@ function renderDashboard(d) {
             <div class="task-row" style="cursor:pointer" onclick="openDashboardTask(${t.id}, ${t.project_id})" title="Open task">
               <div class="status-dot in_progress"></div>
               <div class="task-title-sm">${esc(t.title)}</div>
-              <div class="task-meta" style="color:var(--red)">${formatApiDateOnly(t.due_date)}</div>
+              <div class="task-meta" style="color:var(--red)">${formatDueDateOnly(t.due_date)}</div>
             </div>
           `).join('') : `<div class="empty"><div class="empty-icon">🎉</div><div class="empty-title">All caught up!</div><div class="empty-sub">No overdue tasks</div></div>`}
         </div>
@@ -1516,7 +1516,7 @@ function openTaskDetail(taskId) {
   currentTaskDetailId = taskId;
   const isAdmin = currentProject.my_role === 'admin';
   const canEdit = isAdmin || task.assignee?.id === user.id || task.created_by?.id === user.id;
-  const dueText = formatApiDateTime(task.due_date);
+  const dueText = formatDueDateTime(task.due_date);
   document.getElementById('task-detail-body').innerHTML = `
     <div style="margin-bottom:16px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
@@ -1634,7 +1634,7 @@ function openEditTaskModal(taskId) {
   document.getElementById('task-priority').value = task.priority;
   document.getElementById('task-status').value = task.status;
   if (task.due_date) {
-    const d = parseApiDate(task.due_date);
+    const d = parseDueDate(task.due_date);
     document.getElementById('task-due').value = toDateTimeLocalValue(d);
   } else {
     document.getElementById('task-due').value = '';
@@ -1832,29 +1832,54 @@ function esc(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function parseApiDate(dateString) {
+function parseServerDate(dateString) {
   if (!dateString) return null;
   const hasTimezone = /([zZ]|[+-]\d{2}:\d{2})$/.test(dateString);
-  if (hasTimezone) return new Date(dateString);
-  // For timezone-less values, keep wall-clock as local time.
-  const normalized = dateString.replace(' ', 'T');
-  return new Date(normalized);
+  return new Date(hasTimezone ? dateString : `${dateString}Z`);
 }
 
 function formatApiDateTime(dateString) {
-  const dt = parseApiDate(dateString);
+  const dt = parseServerDate(dateString);
   if (!dt || Number.isNaN(dt.getTime())) return '';
   return dt.toLocaleString('en-IN', { timeZone: DISPLAY_TIMEZONE });
 }
 
 function formatApiDateOnly(dateString) {
-  const dt = parseApiDate(dateString);
+  const dt = parseServerDate(dateString);
+  if (!dt || Number.isNaN(dt.getTime())) return '';
+  return dt.toLocaleDateString('en-IN', { timeZone: DISPLAY_TIMEZONE });
+}
+
+function parseDueDate(dateString) {
+  if (!dateString) return null;
+  const hasTimezone = /([zZ]|[+-]\d{2}:\d{2})$/.test(dateString);
+  if (hasTimezone) return new Date(dateString);
+  const m = dateString.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?/);
+  if (!m) return new Date(dateString);
+  const year = Number(m[1]);
+  const month = Number(m[2]) - 1;
+  const day = Number(m[3]);
+  const hour = Number(m[4]);
+  const minute = Number(m[5]);
+  const second = Number(m[6] || 0);
+  const istOffsetMs = 330 * 60 * 1000;
+  return new Date(Date.UTC(year, month, day, hour, minute, second) - istOffsetMs);
+}
+
+function formatDueDateTime(dateString) {
+  const dt = parseDueDate(dateString);
+  if (!dt || Number.isNaN(dt.getTime())) return '';
+  return dt.toLocaleString('en-IN', { timeZone: DISPLAY_TIMEZONE });
+}
+
+function formatDueDateOnly(dateString) {
+  const dt = parseDueDate(dateString);
   if (!dt || Number.isNaN(dt.getTime())) return '';
   return dt.toLocaleDateString('en-IN', { timeZone: DISPLAY_TIMEZONE });
 }
 
 function formatApiMonthDay(dateString) {
-  const dt = parseApiDate(dateString);
+  const dt = parseDueDate(dateString);
   if (!dt || Number.isNaN(dt.getTime())) return '';
   return dt.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', timeZone: DISPLAY_TIMEZONE });
 }
