@@ -1268,23 +1268,24 @@ async function showProjectDetail(projectId) {
 }
 
 function renderProjectDetail(project, tasks, isAdmin) {
-  const todo = tasks.filter(t => t.status === 'todo');
-  const inProgress = tasks.filter(t => t.status === 'in_progress');
-  const done = tasks.filter(t => t.status === 'done');
+  const visibleTasks = isAdmin ? tasks : tasks.filter(t => t.assignee_id === user.id);
+  const todo = visibleTasks.filter(t => t.status === 'todo');
+  const inProgress = visibleTasks.filter(t => t.status === 'in_progress');
+  const done = visibleTasks.filter(t => t.status === 'done');
 
   setContent(`
     <div class="tabs">
-      <button class="tab active" id="tab-tasks" onclick="switchTab('tasks')">Tasks (${tasks.length})</button>
+      <button class="tab active" id="tab-tasks" onclick="switchTab('tasks')">Tasks (${visibleTasks.length})</button>
       <button class="tab" id="tab-members" onclick="switchTab('members')">Members (${project.members.length})</button>
       <button class="tab" id="tab-activity" onclick="switchTab('activity')">Activity (${currentActivity.length})</button>
     </div>
 
     <div id="tab-panel-tasks">
-      ${tasks.length === 0 ? `
+      ${visibleTasks.length === 0 ? `
         <div class="empty">
           <div class="empty-icon">✅</div>
-          <div class="empty-title">No tasks yet</div>
-          <div class="empty-sub" style="margin-bottom:20px">Add your first task to this project</div>
+          <div class="empty-title">${isAdmin ? 'No tasks yet' : 'No assigned tasks'}</div>
+          <div class="empty-sub" style="margin-bottom:20px">${isAdmin ? 'Add your first task to this project' : 'Tasks assigned to you will appear here'}</div>
           ${isAdmin ? `<button class="btn btn-primary" style="width:auto" onclick="openCreateTaskModal()">+ New Task</button>` : ''}
         </div>
       ` : `
