@@ -804,8 +804,12 @@ def dashboard():
         'overdue_tasks': [t.to_dict() for t in overdue[:5]]
     })
 
-if __name__ == '__main__':
+def init_database():
     with app.app_context():
         db.create_all()
+
+init_database()
+
+if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
