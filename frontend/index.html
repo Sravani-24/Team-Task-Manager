@@ -946,6 +946,7 @@ let currentTaskDetailId = null;
 let notificationsState = { unread_count: 0, items: [] };
 let realtimeRefreshTimer = null;
 const REALTIME_REFRESH_MS = 15000;
+const DISPLAY_TIMEZONE = 'Asia/Kolkata';
 
 // ── INIT ──
 window.addEventListener('DOMContentLoaded', () => {
@@ -1843,19 +1844,19 @@ function parseApiDate(dateString) {
 function formatApiDateTime(dateString) {
   const dt = parseApiDate(dateString);
   if (!dt || Number.isNaN(dt.getTime())) return '';
-  return dt.toLocaleString();
+  return dt.toLocaleString('en-IN', { timeZone: DISPLAY_TIMEZONE });
 }
 
 function formatApiDateOnly(dateString) {
   const dt = parseApiDate(dateString);
   if (!dt || Number.isNaN(dt.getTime())) return '';
-  return dt.toLocaleDateString();
+  return dt.toLocaleDateString('en-IN', { timeZone: DISPLAY_TIMEZONE });
 }
 
 function formatApiMonthDay(dateString) {
   const dt = parseApiDate(dateString);
   if (!dt || Number.isNaN(dt.getTime())) return '';
-  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return dt.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', timeZone: DISPLAY_TIMEZONE });
 }
 
 function toDateTimeLocalValue(dateObj) {
