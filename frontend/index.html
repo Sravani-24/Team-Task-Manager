@@ -1535,6 +1535,7 @@ function openTaskDetail(taskId) {
   if (!task) return;
   currentTaskDetailId = taskId;
   const isAdmin = currentProject.my_role === 'admin';
+  const isProjectOwner = currentProject?.owner_id === user.id;
   const canEdit = isAdmin || task.assignee?.id === user.id || task.created_by?.id === user.id;
   const dueText = formatDueDateTime(task.due_date);
   document.getElementById('task-detail-body').innerHTML = `
@@ -1587,7 +1588,7 @@ function openTaskDetail(taskId) {
     ${canEdit ? `
       <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-task-detail');openEditTaskModal(${task.id})">✏️ Edit</button>
     ` : ''}
-    ${(isAdmin || task.created_by?.id === user.id) ? `
+    ${(isAdmin || isProjectOwner) ? `
       <button class="btn btn-danger btn-sm" onclick="deleteTask(${task.id})">🗑 Delete</button>
     ` : ''}
     <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-task-detail')">Close</button>

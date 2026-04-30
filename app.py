@@ -688,8 +688,8 @@ def delete_task(project_id, task_id):
     if not task:
         return jsonify({'error': 'Task not found'}), 404
     role = get_project_role(project_id, user_id)
-    if role == 'member' and task.created_by != user_id:
-        return jsonify({'error': 'Only admins or task creator can delete tasks'}), 403
+    if role != 'admin' and project.owner_id != user_id:
+        return jsonify({'error': 'Only project admins or project creator can delete tasks'}), 403
     log_activity(project_id, user_id, 'task_deleted', f"Deleted task '{task.title}'", task_id=task.id)
     db.session.delete(task)
     db.session.commit()
