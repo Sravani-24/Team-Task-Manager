@@ -326,6 +326,19 @@ def generate_due_soon_notifications_for_user(user_id):
 def index():
     return send_from_directory('frontend', 'index.html')
 
+@app.errorhandler(404)
+def not_found(err):
+    if request.path.startswith('/api/'):
+        return jsonify({'error': 'API endpoint not found'}), 404
+    return err
+
+@app.errorhandler(Exception)
+def handle_unexpected_error(err):
+    if request.path.startswith('/api/'):
+        app.logger.exception('Unhandled API error: %s', err)
+        return jsonify({'error': 'Internal server error'}), 500
+    raise err
+
 # ─── Auth Routes ──────────────────────────────────────────────────────────────
 
 @app.route('/api/auth/signup', methods=['POST'])
