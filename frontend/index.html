@@ -1,0 +1,1860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlowDesk — Team Task Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --surface3: #22223a;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --accent: #7c6ef7;
+    --accent2: #a78bfa;
+    --accent3: #c4b5fd;
+    --green: #34d399;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --text: #e8e8f0;
+    --text2: #9090b0;
+    --text3: #5a5a7a;
+    --radius: 12px;
+    --sidebar: 240px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
+
+  /* ── Auth ── */
+  #auth-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at 30% 40%, rgba(124,110,247,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(167,139,250,0.08) 0%, transparent 50%),
+                var(--bg);
+  }
+
+  .auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 48px;
+    width: 420px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+    animation: slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 32px;
+  }
+
+  .logo-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+
+  .logo-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(90deg, #fff, var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .auth-title { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  .auth-sub { color: var(--text2); font-size: 14px; margin-bottom: 28px; }
+
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 6px; }
+
+  input, select, textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,110,247,0.15);
+  }
+  input::placeholder { color: var(--text3); }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 11px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #6b5ef0);
+    color: #fff;
+    width: 100%;
+    padding: 13px;
+    font-size: 15px;
+    font-weight: 600;
+    box-shadow: 0 4px 20px rgba(124,110,247,0.3);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(124,110,247,0.4); }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+  .btn-danger { background: rgba(248,113,113,0.15); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
+  .btn-danger:hover { background: rgba(248,113,113,0.25); }
+  .btn-sm { padding: 7px 12px; font-size: 13px; border-radius: 6px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+  .auth-switch { text-align: center; margin-top: 20px; font-size: 14px; color: var(--text2); }
+  .auth-switch a { color: var(--accent3); cursor: pointer; text-decoration: none; }
+  .auth-switch a:hover { text-decoration: underline; }
+
+  .error-msg { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.2); color: var(--red); padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+
+  /* ── App Layout ── */
+  #app {
+    display: none;
+    min-height: 100vh;
+    width: 100%;
+  }
+
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0;
+    width: var(--sidebar);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    padding: 20px 20px 16px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-logo .logo-icon { width: 32px; height: 32px; font-size: 16px; border-radius: 8px; }
+  .sidebar-logo .logo-text { font-size: 18px; }
+
+  .sidebar-nav { flex: 1; padding: 12px 8px; overflow-y: auto; }
+
+  .nav-section { margin-bottom: 20px; }
+  .nav-section-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--text3); padding: 0 12px; margin-bottom: 6px;
+  }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text2);
+    transition: all 0.15s;
+    margin-bottom: 2px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(124,110,247,0.15); color: var(--accent3); }
+  .nav-item .nav-icon { font-size: 16px; flex-shrink: 0; }
+  .nav-item .nav-badge {
+    margin-left: auto; background: var(--accent); color: #fff;
+    font-size: 10px; padding: 2px 6px; border-radius: 20px; flex-shrink: 0;
+  }
+
+  .sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .user-card {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    background: var(--surface2);
+  }
+  .user-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 700; color: #fff;
+    flex-shrink: 0;
+  }
+  .user-info { flex: 1; overflow: hidden; }
+  .user-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-role { font-size: 11px; color: var(--text3); }
+  .logout-btn { background: none; border: none; cursor: pointer; color: var(--text3); padding: 4px; border-radius: 4px; font-size: 16px; }
+  .logout-btn:hover { color: var(--red); }
+
+  .main {
+    margin-left: var(--sidebar);
+    min-height: 100vh;
+    width: calc(100vw - var(--sidebar));
+    max-width: calc(100vw - var(--sidebar));
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .topbar {
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg);
+    position: sticky; top: 0; z-index: 50;
+  }
+
+  .page-title { font-size: 22px; font-weight: 700; }
+  .page-subtitle { font-size: 13px; color: var(--text2); margin-top: 2px; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .notif-wrap { position: relative; }
+  .notif-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    cursor: pointer;
+    position: relative;
+    font-size: 16px;
+  }
+  .notif-btn:hover { border-color: var(--border2); color: var(--text); }
+  .notif-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: var(--red);
+    color: #fff;
+    border-radius: 20px;
+    font-size: 10px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--bg);
+  }
+  .notif-panel {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 340px;
+    max-height: 420px;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    box-shadow: 0 16px 36px rgba(0,0,0,0.45);
+    z-index: 250;
+    display: none;
+  }
+  .notif-panel.open { display: block; }
+  .notif-header {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .notif-title { font-size: 13px; font-weight: 600; }
+  .notif-read-all { font-size: 11px; color: var(--accent3); cursor: pointer; background: none; border: none; }
+  .notif-item {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .notif-item:hover { background: var(--surface2); }
+  .notif-item.unread { background: rgba(124,110,247,0.09); }
+  .notif-message { font-size: 12px; line-height: 1.4; margin-bottom: 6px; }
+  .notif-time { font-size: 11px; color: var(--text3); }
+  .notif-empty { padding: 24px; font-size: 12px; color: var(--text3); text-align: center; }
+
+  .content {
+    padding: 28px 32px;
+    width: 100%;
+    flex: 1;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* ── Dashboard ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+    width: 100%;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: var(--border2); }
+  .stat-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .stat-card.purple::before { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .stat-card.green::before { background: linear-gradient(90deg, var(--green), #10b981); }
+  .stat-card.yellow::before { background: linear-gradient(90deg, var(--yellow), #f59e0b); }
+  .stat-card.red::before { background: linear-gradient(90deg, var(--red), #ef4444); }
+
+  .stat-icon { font-size: 24px; margin-bottom: 12px; }
+  .stat-value { font-family: 'DM Sans', sans-serif; font-size: 38px; font-weight: 700; line-height: 1; margin-bottom: 4px; letter-spacing: -1px; }
+  .stat-label { font-size: 13px; color: var(--text2); }
+
+  .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-title { font-size: 15px; font-weight: 600; }
+  .card-body { padding: 0; }
+
+  .task-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .task-row:last-child { border-bottom: none; }
+  .task-row:hover { background: var(--surface2); }
+
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .status-dot.todo { background: var(--text3); }
+  .status-dot.in_progress { background: var(--yellow); }
+  .status-dot.done { background: var(--green); }
+
+  .task-title-sm { font-size: 13px; font-weight: 500; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .task-meta { font-size: 11px; color: var(--text3); flex-shrink: 0; }
+
+  /* ── Projects ── */
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  .project-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .project-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+  }
+
+  .project-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+  .project-name { font-size: 16px; font-weight: 600; line-height: 1.3; }
+  .project-desc { font-size: 13px; color: var(--text2); margin-bottom: 16px; line-height: 1.5; min-height: 20px; }
+  .project-footer { display: flex; align-items: center; justify-content: space-between; }
+  .project-stats { display: flex; gap: 12px; }
+  .project-stat { font-size: 12px; color: var(--text3); display: flex; align-items: center; gap: 4px; }
+  .member-stack { display: flex; }
+  .member-avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: #fff;
+    border: 2px solid var(--surface);
+    margin-left: -6px;
+  }
+  .member-avatar:first-child { margin-left: 0; }
+
+  .role-badge {
+    display: inline-flex; align-items: center;
+    padding: 3px 8px; border-radius: 20px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .role-badge.admin { background: rgba(124,110,247,0.15); color: var(--accent3); }
+  .role-badge.member { background: rgba(144,144,176,0.1); color: var(--text2); }
+
+  /* ── Tasks ── */
+  .tasks-toolbar {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 20px; flex-wrap: wrap;
+  }
+
+  .filter-group { display: flex; gap: 6px; }
+  .filter-btn {
+    padding: 7px 14px; border-radius: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    cursor: pointer; font-size: 13px; font-weight: 500;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .filter-btn.active { background: rgba(124,110,247,0.15); border-color: var(--accent); color: var(--accent3); }
+  .filter-btn:hover:not(.active) { border-color: var(--border2); color: var(--text); }
+
+  .search-input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    color: var(--text);
+    font-size: 13px;
+    width: 200px;
+  }
+
+  .kanban {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    align-items: start;
+  }
+
+  .kanban-col {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .kanban-header {
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .kanban-label { font-size: 13px; font-weight: 600; }
+  .kanban-count {
+    background: var(--surface2);
+    padding: 2px 8px; border-radius: 20px;
+    font-size: 11px; color: var(--text2);
+  }
+
+  .kanban-body { padding: 12px; min-height: 80px; }
+
+  .task-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .task-card:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+  .task-card:last-child { margin-bottom: 0; }
+
+  .task-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .task-card-title { font-size: 13px; font-weight: 500; line-height: 1.4; }
+  .priority-badge {
+    padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0;
+  }
+  .priority-badge.high { background: rgba(248,113,113,0.15); color: var(--red); }
+  .priority-badge.medium { background: rgba(251,191,36,0.15); color: var(--yellow); }
+  .priority-badge.low { background: rgba(52,211,153,0.15); color: var(--green); }
+
+  .task-card-meta { display: flex; align-items: center; justify-content: space-between; }
+  .task-due { font-size: 11px; color: var(--text3); }
+  .task-due.overdue { color: var(--red); }
+  .task-assignee { font-size: 11px; color: var(--text3); }
+
+  /* ── Members panel ── */
+  .members-list { }
+  .member-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .member-row:last-child { border-bottom: none; }
+  .member-row-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .member-row-info { flex: 1; }
+  .member-row-name { font-size: 14px; font-weight: 500; }
+  .member-row-email { font-size: 12px; color: var(--text2); }
+  .timeline-list { display: flex; flex-direction: column; gap: 10px; }
+  .timeline-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .timeline-main { font-size: 13px; color: var(--text); line-height: 1.45; margin-bottom: 5px; }
+  .timeline-meta { font-size: 11px; color: var(--text3); }
+
+  .comment-section { margin-top: 18px; border-top: 1px solid var(--border); padding-top: 14px; }
+  .comment-title { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+  .comment-list { max-height: 220px; overflow-y: auto; margin-bottom: 10px; }
+  .comment-item { padding: 10px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; }
+  .comment-meta { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+  .comment-author { font-size: 12px; font-weight: 600; }
+  .comment-time { font-size: 11px; color: var(--text3); }
+  .comment-text { font-size: 13px; color: var(--text2); line-height: 1.5; white-space: pre-wrap; }
+  .comment-empty { font-size: 12px; color: var(--text3); text-align: center; padding: 12px; }
+  .comment-composer textarea { min-height: 78px; resize: vertical; }
+  .comment-actions { margin-top: 8px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .mention-hint { font-size: 11px; color: var(--text3); }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    width: 100%; max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: scale(0.95) translateY(10px);
+    transition: transform 0.2s;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+  }
+  .modal-overlay.open .modal { transform: scale(1) translateY(0); }
+
+  .modal-header {
+    padding: 22px 24px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-title { font-size: 18px; font-weight: 700; }
+  .modal-close { background: none; border: none; cursor: pointer; color: var(--text2); font-size: 20px; padding: 4px; border-radius: 6px; }
+  .modal-close:hover { background: var(--surface2); color: var(--text); }
+
+  .modal-body { padding: 22px 24px; }
+  .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 13px 18px;
+    font-size: 13px;
+    z-index: 9999;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    display: flex; align-items: center; gap: 10px;
+    transform: translateY(80px);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    max-width: 320px;
+  }
+  #toast.show { transform: translateY(0); }
+  #toast.success { border-left: 3px solid var(--green); }
+  #toast.error { border-left: 3px solid var(--red); }
+
+  /* ── Empty states ── */
+  .empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 60px 20px; text-align: center;
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+  .empty-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .empty-sub { font-size: 13px; color: var(--text2); }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+  .tab {
+    padding: 10px 16px; font-size: 14px; font-weight: 500;
+    cursor: pointer; color: var(--text2); border-bottom: 2px solid transparent;
+    transition: all 0.15s; font-family: 'DM Sans', sans-serif; background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .tab.active { color: var(--accent3); border-bottom-color: var(--accent); }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  .hidden { display: none !important; }
+
+  /* ── Loader ── */
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-screen {
+    display: flex; align-items: center; justify-content: center;
+    padding: 60px;
+  }
+
+  /* User search dropdown */
+  .user-search-wrap { position: relative; }
+  .user-dropdown {
+    position: absolute; top: 100%; left: 0; right: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 8px; margin-top: 4px;
+    z-index: 200; overflow: hidden;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+  }
+  .user-option {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; cursor: pointer; transition: background 0.1s;
+  }
+  .user-option:hover { background: var(--surface3); }
+  .user-option-name { font-size: 13px; font-weight: 500; }
+  .user-option-email { font-size: 11px; color: var(--text2); }
+
+  select option { background: var(--surface2); }
+
+  .project-detail-header {
+    display: flex; align-items: center; gap: 16px; margin-bottom: 24px;
+  }
+  .back-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 14px;
+    cursor: pointer; font-size: 13px; color: var(--text2);
+    transition: all 0.15s; font-family: 'DM Sans', sans-serif;
+  }
+  .back-btn:hover { color: var(--text); border-color: var(--border2); }
+
+  /* ── Responsive ── */
+  @media (max-width: 1100px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 800px) {
+    :root { --sidebar: 200px; }
+    .content { padding: 20px 20px; }
+    .topbar { padding: 16px 20px; }
+    .dash-grid { grid-template-columns: 1fr; }
+    .kanban { grid-template-columns: 1fr; }
+    .stat-card { padding: 16px; }
+    .stat-value { font-size: 30px; }
+  }
+  @media (max-width: 600px) {
+    :root { --sidebar: 0px; }
+    .sidebar { display: none; }
+    .main {
+      margin-left: 0;
+      width: 100vw;
+      max-width: 100vw;
+    }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .form-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── AUTH SCREEN ── -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <div class="logo-text">FlowDesk</div>
+    </div>
+
+    <!-- Login Form -->
+    <div id="login-form">
+      <h2 class="auth-title">Welcome back</h2>
+      <p class="auth-sub">Sign in to your workspace</p>
+      <div id="login-error" class="error-msg hidden"></div>
+      <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="you@company.com"></div>
+      <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="••••••••"></div>
+      <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Sign In</button>
+      <p class="auth-switch">No account? <a onclick="toggleAuth()">Create one</a></p>
+    </div>
+
+    <!-- Signup Form -->
+    <div id="signup-form" class="hidden">
+      <h2 class="auth-title">Create account</h2>
+      <p class="auth-sub">Start managing your team today</p>
+      <div id="signup-error" class="error-msg hidden"></div>
+      <div class="field"><label>Full Name</label><input type="text" id="signup-name" placeholder="Jane Smith"></div>
+      <div class="field"><label>Email</label><input type="email" id="signup-email" placeholder="you@company.com"></div>
+      <div class="field"><label>Password</label><input type="password" id="signup-password" placeholder="Min. 6 characters"></div>
+      <button class="btn btn-primary" id="signup-btn" onclick="doSignup()">Create Account</button>
+      <p class="auth-switch">Already have one? <a onclick="toggleAuth()">Sign in</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN APP ── -->
+<div id="app">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">⚡</div>
+      <div class="logo-text">FlowDesk</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-label">Overview</div>
+        <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">
+          <span class="nav-icon">📊</span> Dashboard
+        </div>
+        <div class="nav-item" onclick="showPage('projects')" id="nav-projects">
+          <span class="nav-icon">📁</span> Projects
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-label">Projects</div>
+        <div id="project-nav-list"></div>
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="sidebar-avatar">?</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-name">Loading…</div>
+          <div class="user-role">Team Member</div>
+        </div>
+        <button class="logout-btn" onclick="logout()" title="Logout">↩</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title" id="page-title">Dashboard</div>
+        <div class="page-subtitle" id="page-subtitle">Welcome back 👋</div>
+      </div>
+      <div class="topbar-right">
+        <div class="notif-wrap">
+          <button class="notif-btn" onclick="toggleNotifications()" title="Notifications">
+            🔔
+            <span class="notif-badge hidden" id="notif-badge">0</span>
+          </button>
+          <div class="notif-panel" id="notif-panel"></div>
+        </div>
+        <div id="topbar-actions"></div>
+      </div>
+    </div>
+
+    <div class="content" id="main-content">
+      <div class="loading-screen"><div class="spinner"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODALS ── -->
+<!-- Create Project -->
+<div class="modal-overlay" id="modal-create-project" onclick="closeModal('modal-create-project', event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">New Project</h3>
+      <button class="modal-close" onclick="closeModal('modal-create-project')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Project Name *</label><input type="text" id="proj-name" placeholder="Marketing Campaign Q3"></div>
+      <div class="field"><label>Description</label><textarea id="proj-desc" rows="3" placeholder="What is this project about?"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-create-project')">Cancel</button>
+      <button class="btn btn-primary" style="width:auto" onclick="createProject()">Create Project</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create Task -->
+<div class="modal-overlay" id="modal-create-task" onclick="closeModal('modal-create-task', event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="task-modal-title">New Task</h3>
+      <button class="modal-close" onclick="closeModal('modal-create-task')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Title *</label><input type="text" id="task-title" placeholder="Task description…"></div>
+      <div class="field"><label>Description</label><textarea id="task-desc" rows="3" placeholder="More details…"></textarea></div>
+      <div class="form-row">
+        <div class="field">
+          <label>Priority</label>
+          <select id="task-priority">
+            <option value="low">🟢 Low</option>
+            <option value="medium" selected>🟡 Medium</option>
+            <option value="high">🔴 High</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <select id="task-status">
+            <option value="todo">To Do</option>
+            <option value="in_progress">In Progress</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Assignee</label>
+          <select id="task-assignee"><option value="">Unassigned</option></select>
+        </div>
+        <div class="field">
+          <label>Due Date</label>
+          <input type="datetime-local" id="task-due">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-create-task')">Cancel</button>
+      <button class="btn btn-primary" style="width:auto" id="task-submit-btn" onclick="submitTask()">Create Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Member -->
+<div class="modal-overlay" id="modal-add-member" onclick="closeModal('modal-add-member', event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Add Team Member</h3>
+      <button class="modal-close" onclick="closeModal('modal-add-member')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Search by name or email</label>
+        <div class="user-search-wrap">
+          <input type="text" id="member-search" placeholder="Jane Smith…" oninput="searchUsers()" autocomplete="off">
+          <div class="user-dropdown hidden" id="user-dropdown"></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Role</label>
+        <select id="member-role">
+          <option value="member">Member — can view and manage own tasks</option>
+          <option value="admin">Admin — full project control</option>
+        </select>
+      </div>
+      <div id="selected-user-info" class="hidden" style="background:var(--surface2);border-radius:8px;padding:12px;display:flex;align-items:center;gap:10px;">
+        <div class="user-avatar" id="sel-avatar" style="width:36px;height:36px;font-size:13px;"></div>
+        <div><div id="sel-name" style="font-size:13px;font-weight:500;"></div><div id="sel-email" style="font-size:11px;color:var(--text2);"></div></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-member')">Cancel</button>
+      <button class="btn btn-primary" style="width:auto" onclick="addMember()">Add Member</button>
+    </div>
+  </div>
+</div>
+
+<!-- Task Detail -->
+<div class="modal-overlay" id="modal-task-detail" onclick="closeModal('modal-task-detail', event)">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <h3 class="modal-title">Task Detail</h3>
+      <button class="modal-close" onclick="closeModal('modal-task-detail')">✕</button>
+    </div>
+    <div class="modal-body" id="task-detail-body"></div>
+    <div class="modal-footer" id="task-detail-footer"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ── CONFIG ──
+const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:5000/api'
+  : '/api';
+
+// ── STATE ──
+let token = localStorage.getItem('token');
+let user = JSON.parse(localStorage.getItem('user') || 'null');
+let projects = [];
+let currentProject = null;
+let currentTasks = [];
+let currentActivity = [];
+let currentActivityFilter = 'all';
+let editingTaskId = null;
+let selectedUserId = null;
+let searchTimeout = null;
+let currentTaskDetailId = null;
+let notificationsState = { unread_count: 0, items: [] };
+let realtimeRefreshTimer = null;
+const REALTIME_REFRESH_MS = 15000;
+
+// ── INIT ──
+window.addEventListener('DOMContentLoaded', () => {
+  if (token && user) showApp();
+  // Enter key support
+  document.getElementById('login-password').addEventListener('keydown', e => e.key === 'Enter' && doLogin());
+  document.getElementById('signup-password').addEventListener('keydown', e => e.key === 'Enter' && doSignup());
+  document.addEventListener('click', handleOutsideNotificationClick);
+  window.addEventListener('focus', refreshRealtimeData);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshRealtimeData();
+  });
+});
+
+// ── API HELPER ──
+async function api(method, path, body) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+  };
+  if (token) opts.headers['Authorization'] = `Bearer ${token}`;
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  const data = await res.json();
+  if (res.status === 401 && path !== '/auth/login') { logout(); return null; }
+  if (!res.ok) throw new Error(data.error || 'Something went wrong');
+  return data;
+}
+
+// ── AUTH ──
+function toggleAuth() {
+  const lf = document.getElementById('login-form');
+  const sf = document.getElementById('signup-form');
+  lf.classList.toggle('hidden');
+  sf.classList.toggle('hidden');
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.classList.add('hidden');
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  try {
+    const data = await api('POST', '/auth/login', { email, password });
+    token = data.token; user = data.user;
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    showApp();
+  } catch(e) {
+    errEl.textContent = e.message; errEl.classList.remove('hidden');
+  }
+  btn.disabled = false; btn.textContent = 'Sign In';
+}
+
+async function doSignup() {
+  const name = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+  const errEl = document.getElementById('signup-error');
+  errEl.classList.add('hidden');
+  const btn = document.getElementById('signup-btn');
+  btn.disabled = true; btn.textContent = 'Creating…';
+  try {
+    const data = await api('POST', '/auth/signup', { name, email, password });
+    token = data.token; user = data.user;
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    showApp();
+  } catch(e) {
+    errEl.textContent = e.message; errEl.classList.remove('hidden');
+  }
+  btn.disabled = false; btn.textContent = 'Create Account';
+}
+
+function logout() {
+  token = null; user = null;
+  localStorage.removeItem('token'); localStorage.removeItem('user');
+  if (realtimeRefreshTimer) {
+    clearInterval(realtimeRefreshTimer);
+    realtimeRefreshTimer = null;
+  }
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+}
+
+// ── SHOW APP ──
+function showApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('sidebar-name').textContent = user.name;
+  document.getElementById('sidebar-avatar').textContent = user.name.charAt(0).toUpperCase();
+  loadNotifications();
+  startRealtimeRefresh();
+  loadProjects().then(() => showPage('dashboard'));
+}
+
+function startRealtimeRefresh() {
+  if (realtimeRefreshTimer) clearInterval(realtimeRefreshTimer);
+  realtimeRefreshTimer = setInterval(refreshRealtimeData, REALTIME_REFRESH_MS);
+}
+
+async function refreshRealtimeData() {
+  if (!token) return;
+  await loadNotifications();
+  if (currentProject && document.getElementById('tab-panel-activity')) {
+    await refreshCurrentProjectActivity();
+  }
+}
+
+async function loadProjects() {
+  try {
+    projects = await api('GET', '/projects');
+    renderProjectNav();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function renderProjectNav() {
+  const el = document.getElementById('project-nav-list');
+  el.innerHTML = projects.slice(0, 8).map(p => `
+    <div class="nav-item" onclick="showProjectDetail(${p.id})" id="nav-proj-${p.id}">
+      <span class="nav-icon">📋</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis">${esc(p.name)}</span>
+    </div>
+  `).join('') + (projects.length === 0 ? `<div style="padding:8px 12px;font-size:12px;color:var(--text3)">No projects yet</div>` : '');
+}
+
+// ── NAVIGATION ──
+function setActiveNav(id) {
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+}
+
+function showPage(page) {
+  setActiveNav(`nav-${page}`);
+  if (page === 'dashboard') {
+    document.getElementById('page-title').textContent = 'Dashboard';
+    document.getElementById('page-subtitle').textContent = `Welcome back, ${user.name} 👋`;
+    document.getElementById('topbar-actions').innerHTML = '';
+    loadDashboard();
+  } else if (page === 'projects') {
+    document.getElementById('page-title').textContent = 'Projects';
+    document.getElementById('page-subtitle').textContent = `${projects.length} projects`;
+    document.getElementById('topbar-actions').innerHTML = `<button class="btn btn-primary" style="width:auto" onclick="openModal('modal-create-project')">+ New Project</button>`;
+    renderProjects();
+  }
+}
+
+// ── DASHBOARD ──
+async function loadDashboard() {
+  setContent(`<div class="loading-screen"><div class="spinner"></div></div>`);
+  try {
+    const data = await api('GET', '/dashboard');
+    renderDashboard(data);
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function renderDashboard(d) {
+  setContent(`
+    <div class="stats-grid">
+      <div class="stat-card purple">
+        <div class="stat-icon">📁</div>
+        <div class="stat-value">${d.total_projects}</div>
+        <div class="stat-label">Total Projects</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon">✅</div>
+        <div class="stat-value">${d.done}</div>
+        <div class="stat-label">Completed Tasks</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-value">${d.in_progress}</div>
+        <div class="stat-label">In Progress</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-icon">⏰</div>
+        <div class="stat-value">${d.overdue}</div>
+        <div class="stat-label">Overdue</div>
+      </div>
+    </div>
+    <div class="dash-grid">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Recent Activity</div>
+        </div>
+        <div class="card-body">
+          ${d.recent_tasks.length ? d.recent_tasks.map(t => `
+            <div class="task-row">
+              <div class="status-dot ${t.status}"></div>
+              <div class="task-title-sm">${esc(t.title)}</div>
+              <div class="task-meta">${statusLabel(t.status)}</div>
+            </div>
+          `).join('') : `<div class="empty"><div class="empty-icon">📝</div><div class="empty-sub">No tasks yet</div></div>`}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title" style="color:var(--red)">⏰ Overdue Tasks</div>
+        </div>
+        <div class="card-body">
+          ${d.overdue_tasks.length ? d.overdue_tasks.map(t => `
+            <div class="task-row" style="cursor:pointer" onclick="openDashboardTask(${t.id}, ${t.project_id})" title="Open task">
+              <div class="status-dot in_progress"></div>
+              <div class="task-title-sm">${esc(t.title)}</div>
+              <div class="task-meta" style="color:var(--red)">${formatApiDateOnly(t.due_date)}</div>
+            </div>
+          `).join('') : `<div class="empty"><div class="empty-icon">🎉</div><div class="empty-title">All caught up!</div><div class="empty-sub">No overdue tasks</div></div>`}
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:20px">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Task Overview</div>
+        </div>
+        <div class="card-body" style="padding:20px">
+          <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:8px"><div style="width:12px;height:12px;border-radius:3px;background:var(--text3)"></div><span style="font-size:13px">${d.todo} To Do</span></div>
+            <div style="display:flex;align-items:center;gap:8px"><div style="width:12px;height:12px;border-radius:3px;background:var(--yellow)"></div><span style="font-size:13px">${d.in_progress} In Progress</span></div>
+            <div style="display:flex;align-items:center;gap:8px"><div style="width:12px;height:12px;border-radius:3px;background:var(--green)"></div><span style="font-size:13px">${d.done} Done</span></div>
+          </div>
+          <div style="margin-top:16px;height:12px;background:var(--surface2);border-radius:20px;overflow:hidden;display:flex;">
+            ${d.total_tasks > 0 ? `
+              <div style="width:${pct(d.todo,d.total_tasks)}%;background:var(--text3);transition:width 0.5s"></div>
+              <div style="width:${pct(d.in_progress,d.total_tasks)}%;background:var(--yellow);transition:width 0.5s"></div>
+              <div style="width:${pct(d.done,d.total_tasks)}%;background:var(--green);transition:width 0.5s"></div>
+            ` : `<div style="width:100%;background:var(--surface3)"></div>`}
+          </div>
+        </div>
+      </div>
+    </div>
+  `);
+}
+
+function pct(v, t) { return t ? Math.round(v/t*100) : 0; }
+
+async function openDashboardTask(taskId, projectId) {
+  try {
+    if (!projectId) return;
+    if (!currentProject || currentProject.id !== projectId) {
+      await showProjectDetail(projectId);
+    }
+    openTaskDetail(taskId);
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+// ── PROJECTS ──
+function renderProjects() {
+  if (!projects.length) {
+    setContent(`
+      <div class="empty" style="padding:100px 20px">
+        <div class="empty-icon">📁</div>
+        <div class="empty-title">No projects yet</div>
+        <div class="empty-sub" style="margin-bottom:20px">Create your first project to get started</div>
+        <button class="btn btn-primary" style="width:auto" onclick="openModal('modal-create-project')">+ Create Project</button>
+      </div>
+    `);
+    return;
+  }
+  setContent(`
+    <div class="projects-grid">
+      ${projects.map(p => `
+        <div class="project-card" onclick="showProjectDetail(${p.id})">
+          <div class="project-header">
+            <div class="project-name">${esc(p.name)}</div>
+            <div class="role-badge ${p.my_role}">${p.my_role}</div>
+          </div>
+          <div class="project-desc">${esc(p.description || 'No description')}</div>
+          <div class="project-footer">
+            <div class="project-stats">
+              <div class="project-stat">📋 ${p.task_count} tasks</div>
+              <div class="project-stat">👥 ${p.members.length} members</div>
+            </div>
+            <div class="member-stack">
+              ${p.members.slice(0,4).map(m => `
+                <div class="member-avatar" title="${esc(m.name)}">${m.name.charAt(0).toUpperCase()}</div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `);
+}
+
+// ── PROJECT DETAIL ──
+async function showProjectDetail(projectId) {
+  setActiveNav(`nav-proj-${projectId}`);
+  setContent(`<div class="loading-screen"><div class="spinner"></div></div>`);
+  try {
+    const [project, tasks, activity] = await Promise.all([
+      api('GET', `/projects/${projectId}`),
+      api('GET', `/projects/${projectId}/tasks`),
+      api('GET', `/projects/${projectId}/activity`)
+    ]);
+    currentProject = project;
+    currentTasks = tasks;
+    currentActivity = activity;
+    currentActivityFilter = 'all';
+    document.getElementById('page-title').textContent = project.name;
+    document.getElementById('page-subtitle').textContent = project.description || 'Project workspace';
+    const isAdmin = project.my_role === 'admin';
+    document.getElementById('topbar-actions').innerHTML = `
+      ${isAdmin ? `<button class="btn btn-ghost btn-sm" onclick="openAddMemberModal()">+ Add Member</button>` : ''}
+      ${isAdmin ? `<button class="btn btn-primary" style="width:auto" onclick="openCreateTaskModal()">+ New Task</button>` : ''}
+    `;
+    renderProjectDetail(project, tasks, isAdmin);
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function renderProjectDetail(project, tasks, isAdmin) {
+  const todo = tasks.filter(t => t.status === 'todo');
+  const inProgress = tasks.filter(t => t.status === 'in_progress');
+  const done = tasks.filter(t => t.status === 'done');
+
+  setContent(`
+    <div class="tabs">
+      <button class="tab active" id="tab-tasks" onclick="switchTab('tasks')">Tasks (${tasks.length})</button>
+      <button class="tab" id="tab-members" onclick="switchTab('members')">Members (${project.members.length})</button>
+      <button class="tab" id="tab-activity" onclick="switchTab('activity')">Activity (${currentActivity.length})</button>
+    </div>
+
+    <div id="tab-panel-tasks">
+      ${tasks.length === 0 ? `
+        <div class="empty">
+          <div class="empty-icon">✅</div>
+          <div class="empty-title">No tasks yet</div>
+          <div class="empty-sub" style="margin-bottom:20px">Add your first task to this project</div>
+          ${isAdmin ? `<button class="btn btn-primary" style="width:auto" onclick="openCreateTaskModal()">+ New Task</button>` : ''}
+        </div>
+      ` : `
+        <div class="kanban">
+          <div class="kanban-col">
+            <div class="kanban-header">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--text3)"></div>
+              <div class="kanban-label">To Do</div>
+              <div class="kanban-count">${todo.length}</div>
+            </div>
+            <div class="kanban-body">${todo.map(t => taskCard(t)).join('') || '<div style="text-align:center;padding:20px;font-size:12px;color:var(--text3)">Empty</div>'}</div>
+          </div>
+          <div class="kanban-col">
+            <div class="kanban-header">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--yellow)"></div>
+              <div class="kanban-label">In Progress</div>
+              <div class="kanban-count">${inProgress.length}</div>
+            </div>
+            <div class="kanban-body">${inProgress.map(t => taskCard(t)).join('') || '<div style="text-align:center;padding:20px;font-size:12px;color:var(--text3)">Empty</div>'}</div>
+          </div>
+          <div class="kanban-col">
+            <div class="kanban-header">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div>
+              <div class="kanban-label">Done</div>
+              <div class="kanban-count">${done.length}</div>
+            </div>
+            <div class="kanban-body">${done.map(t => taskCard(t)).join('') || '<div style="text-align:center;padding:20px;font-size:12px;color:var(--text3)">Empty</div>'}</div>
+          </div>
+        </div>
+      `}
+    </div>
+
+    <div id="tab-panel-members" class="hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-size:14px;color:var(--text2)">${project.members.length} members in this project</div>
+        ${isAdmin ? `<button class="btn btn-ghost btn-sm" onclick="openAddMemberModal()">+ Add Member</button>` : ''}
+      </div>
+      <div class="card">
+        <div class="card-body" style="padding:0 20px">
+          ${project.members.map(m => `
+            <div class="member-row">
+              <div class="member-row-avatar">${m.name.charAt(0).toUpperCase()}</div>
+              <div class="member-row-info">
+                <div class="member-row-name">${esc(m.name)} ${m.id === user.id ? '<span style="font-size:11px;color:var(--text3)">(you)</span>' : ''}</div>
+                <div class="member-row-email">${esc(m.email)}</div>
+              </div>
+              <div class="role-badge ${m.role}">${m.role}</div>
+              ${isAdmin && m.id !== project.owner_id ? `
+                <div style="display:flex;gap:6px;margin-left:8px">
+                  <button class="btn btn-ghost btn-sm" onclick="toggleMemberRole(${m.id}, '${m.role === 'admin' ? 'member' : 'admin'}')">
+                    ${m.role === 'admin' ? 'Demote' : 'Make Admin'}
+                  </button>
+                  <button class="btn btn-danger btn-sm" onclick="removeMember(${m.id})">Remove</button>
+                </div>
+              ` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      ${isAdmin && project.owner_id === user.id ? `
+        <div style="margin-top:16px">
+          <button class="btn btn-danger" onclick="deleteProject()">🗑 Delete Project</button>
+        </div>
+      ` : ''}
+    </div>
+    <div id="tab-panel-activity" class="hidden">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Activity Timeline</div>
+        </div>
+        <div class="card-body" style="padding:14px">
+          <div class="filter-group" style="margin-bottom:12px">
+            <button class="filter-btn ${currentActivityFilter === 'all' ? 'active' : ''}" onclick="setActivityFilter('all')">All</button>
+            <button class="filter-btn ${currentActivityFilter === 'tasks' ? 'active' : ''}" onclick="setActivityFilter('tasks')">Tasks</button>
+            <button class="filter-btn ${currentActivityFilter === 'members' ? 'active' : ''}" onclick="setActivityFilter('members')">Members</button>
+            <button class="filter-btn ${currentActivityFilter === 'comments' ? 'active' : ''}" onclick="setActivityFilter('comments')">Comments</button>
+          </div>
+          <div id="activity-timeline-content"></div>
+        </div>
+      </div>
+    </div>
+  `);
+  renderActivityTimeline();
+}
+
+function taskCard(t) {
+  const due = t.due_date ? new Date(t.due_date) : null;
+  const dueStr = due ? due.toLocaleDateString('en-US', {month:'short',day:'numeric'}) : '';
+  return `
+    <div class="task-card" onclick="openTaskDetail(${t.id})">
+      <div class="task-card-header">
+        <div class="task-card-title">${esc(t.title)}</div>
+        <div class="priority-badge ${t.priority}">${t.priority}</div>
+      </div>
+      ${t.description ? `<div style="font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.4">${esc(t.description.substring(0,80))}${t.description.length > 80 ? '…' : ''}</div>` : ''}
+      <div class="task-card-meta">
+        <div class="task-due ${t.is_overdue ? 'overdue' : ''}">${dueStr ? (t.is_overdue ? '⚠️ ' : '📅 ') + dueStr : ''}</div>
+        <div class="task-assignee">${t.assignee ? '👤 ' + t.assignee.name.split(' ')[0] : ''}</div>
+      </div>
+    </div>
+  `;
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  document.getElementById('tab-panel-tasks').classList.toggle('hidden', tab !== 'tasks');
+  document.getElementById('tab-panel-members').classList.toggle('hidden', tab !== 'members');
+  document.getElementById('tab-panel-activity').classList.toggle('hidden', tab !== 'activity');
+  if (tab === 'activity') renderActivityTimeline();
+}
+
+function activityMatchesFilter(activity, filter) {
+  if (filter === 'all') return true;
+  if (filter === 'tasks') return activity.action.startsWith('task_');
+  if (filter === 'members') return activity.action.startsWith('member_');
+  if (filter === 'comments') return activity.action === 'comment_added';
+  return true;
+}
+
+function renderActivityTimeline() {
+  const container = document.getElementById('activity-timeline-content');
+  if (!container) return;
+  const filtered = currentActivity.filter(a => activityMatchesFilter(a, currentActivityFilter));
+  container.innerHTML = filtered.length ? `
+    <div class="timeline-list">
+      ${filtered.map(a => `
+        <div class="timeline-item">
+          <div class="timeline-main"><strong>${esc(a.actor?.name || 'Unknown')}</strong> ${esc(a.details)}</div>
+          <div class="timeline-meta">${new Date(a.created_at).toLocaleString()}</div>
+        </div>
+      `).join('')}
+    </div>
+  ` : `<div class="empty" style="padding:40px 10px"><div class="empty-icon">🕒</div><div class="empty-sub">No ${esc(currentActivityFilter)} activity yet</div></div>`;
+}
+
+function setActivityFilter(filter) {
+  currentActivityFilter = filter;
+  if (!currentProject) return;
+  renderProjectDetail(currentProject, currentTasks, currentProject.my_role === 'admin');
+  switchTab('activity');
+}
+
+async function refreshCurrentProjectActivity() {
+  if (!currentProject) return;
+  try {
+    currentActivity = await api('GET', `/projects/${currentProject.id}/activity`);
+    if (!document.getElementById('tab-panel-activity')?.classList.contains('hidden')) {
+      renderActivityTimeline();
+    }
+  } catch (e) {}
+}
+
+// ── CREATE PROJECT ──
+async function createProject() {
+  const name = document.getElementById('proj-name').value.trim();
+  const desc = document.getElementById('proj-desc').value.trim();
+  if (!name) { toast('Project name is required', 'error'); return; }
+  try {
+    const project = await api('POST', '/projects', { name, description: desc });
+    projects.unshift(project);
+    renderProjectNav();
+    closeModal('modal-create-project');
+    document.getElementById('proj-name').value = '';
+    document.getElementById('proj-desc').value = '';
+    toast('Project created!', 'success');
+    showProjectDetail(project.id);
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ── TASK MODALS ──
+function openCreateTaskModal() {
+  editingTaskId = null;
+  document.getElementById('task-modal-title').textContent = 'New Task';
+  document.getElementById('task-submit-btn').textContent = 'Create Task';
+  document.getElementById('task-title').value = '';
+  document.getElementById('task-desc').value = '';
+  document.getElementById('task-priority').value = 'medium';
+  document.getElementById('task-status').value = 'todo';
+  document.getElementById('task-due').value = '';
+  populateAssignees();
+  openModal('modal-create-task');
+}
+
+function populateAssignees(selectedId) {
+  const sel = document.getElementById('task-assignee');
+  sel.innerHTML = '<option value="">Unassigned</option>';
+  if (currentProject) {
+    currentProject.members.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.name;
+      if (m.id == selectedId) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+}
+
+async function submitTask() {
+  const title = document.getElementById('task-title').value.trim();
+  if (!title) { toast('Title is required', 'error'); return; }
+  const body = {
+    title,
+    description: document.getElementById('task-desc').value.trim(),
+    priority: document.getElementById('task-priority').value,
+    status: document.getElementById('task-status').value,
+    assignee_id: document.getElementById('task-assignee').value || null,
+    due_date: document.getElementById('task-due').value || null
+  };
+  try {
+    if (editingTaskId) {
+      const updated = await api('PUT', `/projects/${currentProject.id}/tasks/${editingTaskId}`, body);
+      currentTasks = currentTasks.map(t => t.id === editingTaskId ? updated : t);
+      toast('Task updated!', 'success');
+    } else {
+      const task = await api('POST', `/projects/${currentProject.id}/tasks`, body);
+      currentTasks.unshift(task);
+      toast('Task created!', 'success');
+    }
+    closeModal('modal-create-task');
+    renderProjectDetail(currentProject, currentTasks, currentProject.my_role === 'admin');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function openTaskDetail(taskId) {
+  const task = currentTasks.find(t => t.id === taskId);
+  if (!task) return;
+  currentTaskDetailId = taskId;
+  const isAdmin = currentProject.my_role === 'admin';
+  const canEdit = isAdmin || task.assignee?.id === user.id || task.created_by?.id === user.id;
+  const due = task.due_date ? new Date(task.due_date) : null;
+  document.getElementById('task-detail-body').innerHTML = `
+    <div style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div class="priority-badge ${task.priority}">${task.priority}</div>
+        <div class="role-badge ${task.status === 'done' ? 'admin' : 'member'}" style="font-size:11px">${statusLabel(task.status)}</div>
+        ${task.is_overdue ? '<div style="font-size:11px;color:var(--red);font-weight:600">⚠️ OVERDUE</div>' : ''}
+      </div>
+      <h3 style="font-size:18px;font-weight:700;margin-bottom:8px">${esc(task.title)}</h3>
+      ${task.description ? `<p style="font-size:14px;color:var(--text2);line-height:1.6">${esc(task.description)}</p>` : ''}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
+      <div>
+        <div style="color:var(--text3);margin-bottom:4px">Assignee</div>
+        <div>${task.assignee ? task.assignee.name : 'Unassigned'}</div>
+      </div>
+      <div>
+        <div style="color:var(--text3);margin-bottom:4px">Due Date</div>
+        <div class="${task.is_overdue ? 'overdue' : ''}" style="${task.is_overdue ? 'color:var(--red)' : ''}">${due ? due.toLocaleString() : 'No due date'}</div>
+      </div>
+      <div>
+        <div style="color:var(--text3);margin-bottom:4px">Created by</div>
+        <div>${task.created_by ? task.created_by.name : 'Unknown'}</div>
+      </div>
+      <div>
+        <div style="color:var(--text3);margin-bottom:4px">Last Updated</div>
+        <div>${new Date(task.updated_at).toLocaleDateString()}</div>
+      </div>
+    </div>
+    <div class="comment-section">
+      <div class="comment-title">Comments</div>
+      <div id="task-comments" class="comment-list"><div class="comment-empty">Loading comments…</div></div>
+      <div class="comment-composer">
+        <textarea id="task-comment-input" placeholder="Write a comment... Use @email to tag someone"></textarea>
+        <div class="comment-actions">
+          <div style="display:flex;align-items:center;gap:8px">
+            <select id="comment-mention-select" onchange="appendMention(this.value)">
+              <option value="">Tag member…</option>
+              ${(currentProject?.members || []).map(m => `<option value="${esc(m.email)}">@${esc(m.email)} (${esc(m.name)})</option>`).join('')}
+            </select>
+            <span class="mention-hint">Tagged users get notified</span>
+          </div>
+          <button class="btn btn-primary btn-sm" style="width:auto" onclick="submitTaskComment()">Post Comment</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('task-detail-footer').innerHTML = `
+    ${canEdit ? `
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-task-detail');openEditTaskModal(${task.id})">✏️ Edit</button>
+    ` : ''}
+    ${(isAdmin || task.created_by?.id === user.id) ? `
+      <button class="btn btn-danger btn-sm" onclick="deleteTask(${task.id})">🗑 Delete</button>
+    ` : ''}
+    <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-task-detail')">Close</button>
+  `;
+  openModal('modal-task-detail');
+  loadTaskComments(taskId);
+}
+
+async function loadTaskComments(taskId) {
+  const list = document.getElementById('task-comments');
+  if (!list) return;
+  try {
+    const comments = await api('GET', `/projects/${currentProject.id}/tasks/${taskId}/comments`);
+    list.innerHTML = comments.length ? comments.map(c => `
+      <div class="comment-item">
+        <div class="comment-meta">
+          <div class="comment-author">${esc(c.author?.name || 'Unknown')}</div>
+          <div class="comment-time">${new Date(c.created_at).toLocaleString()}</div>
+        </div>
+        <div class="comment-text">${esc(c.content)}</div>
+      </div>
+    `).join('') : `<div class="comment-empty">No comments yet</div>`;
+  } catch (e) {
+    list.innerHTML = `<div class="comment-empty">${esc(e.message)}</div>`;
+  }
+}
+
+function appendMention(value) {
+  if (!value) return;
+  const input = document.getElementById('task-comment-input');
+  if (!input) return;
+  const text = input.value.trim();
+  input.value = (text ? `${text} ` : '') + `@${value} `;
+  input.focus();
+  document.getElementById('comment-mention-select').value = '';
+}
+
+async function submitTaskComment() {
+  if (!currentTaskDetailId || !currentProject) return;
+  const input = document.getElementById('task-comment-input');
+  const content = input.value.trim();
+  if (!content) {
+    toast('Comment cannot be empty', 'error');
+    return;
+  }
+  try {
+    await api('POST', `/projects/${currentProject.id}/tasks/${currentTaskDetailId}/comments`, { content });
+    input.value = '';
+    await loadTaskComments(currentTaskDetailId);
+    toast('Comment posted', 'success');
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+function openEditTaskModal(taskId) {
+  const task = currentTasks.find(t => t.id === taskId);
+  if (!task) return;
+  editingTaskId = taskId;
+  document.getElementById('task-modal-title').textContent = 'Edit Task';
+  document.getElementById('task-submit-btn').textContent = 'Save Changes';
+  document.getElementById('task-title').value = task.title;
+  document.getElementById('task-desc').value = task.description || '';
+  document.getElementById('task-priority').value = task.priority;
+  document.getElementById('task-status').value = task.status;
+  if (task.due_date) {
+    const d = new Date(task.due_date);
+    document.getElementById('task-due').value = toDateTimeLocalValue(d);
+  } else {
+    document.getElementById('task-due').value = '';
+  }
+  populateAssignees(task.assignee_id);
+  openModal('modal-create-task');
+}
+
+async function deleteTask(taskId) {
+  if (!confirm('Delete this task?')) return;
+  try {
+    await api('DELETE', `/projects/${currentProject.id}/tasks/${taskId}`);
+    currentTasks = currentTasks.filter(t => t.id !== taskId);
+    closeModal('modal-task-detail');
+    toast('Task deleted', 'success');
+    renderProjectDetail(currentProject, currentTasks, currentProject.my_role === 'admin');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ── MEMBERS ──
+function openAddMemberModal() {
+  selectedUserId = null;
+  document.getElementById('member-search').value = '';
+  document.getElementById('user-dropdown').classList.add('hidden');
+  document.getElementById('selected-user-info').classList.add('hidden');
+  openModal('modal-add-member');
+}
+
+async function searchUsers() {
+  clearTimeout(searchTimeout);
+  const q = document.getElementById('member-search').value.trim();
+  if (q.length < 2) { document.getElementById('user-dropdown').classList.add('hidden'); return; }
+  searchTimeout = setTimeout(async () => {
+    try {
+      const users = await api('GET', `/users/search?q=${encodeURIComponent(q)}`);
+      const dd = document.getElementById('user-dropdown');
+      if (!users.length) { dd.classList.add('hidden'); return; }
+      dd.innerHTML = users.map(u => `
+        <div class="user-option" onclick="selectUser(${u.id}, '${esc(u.name)}', '${esc(u.email)}')">
+          <div class="user-avatar" style="width:30px;height:30px;font-size:12px">${u.name.charAt(0)}</div>
+          <div><div class="user-option-name">${esc(u.name)}</div><div class="user-option-email">${esc(u.email)}</div></div>
+        </div>
+      `).join('');
+      dd.classList.remove('hidden');
+    } catch(e) {}
+  }, 300);
+}
+
+function selectUser(id, name, email) {
+  selectedUserId = id;
+  document.getElementById('member-search').value = name;
+  document.getElementById('user-dropdown').classList.add('hidden');
+  document.getElementById('sel-avatar').textContent = name.charAt(0);
+  document.getElementById('sel-name').textContent = name;
+  document.getElementById('sel-email').textContent = email;
+  document.getElementById('selected-user-info').classList.remove('hidden');
+}
+
+async function addMember() {
+  if (!selectedUserId) { toast('Please select a user', 'error'); return; }
+  const role = document.getElementById('member-role').value;
+  try {
+    const project = await api('POST', `/projects/${currentProject.id}/members`, { user_id: selectedUserId, role });
+    currentProject = project;
+    // Update project in list
+    projects = projects.map(p => p.id === project.id ? project : p);
+    closeModal('modal-add-member');
+    toast('Member added!', 'success');
+    renderProjectDetail(currentProject, currentTasks, currentProject.my_role === 'admin');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function removeMember(memberId) {
+  if (!confirm('Remove this member?')) return;
+  try {
+    await api('DELETE', `/projects/${currentProject.id}/members/${memberId}`);
+    currentProject = await api('GET', `/projects/${currentProject.id}`);
+    toast('Member removed', 'success');
+    renderProjectDetail(currentProject, currentTasks, currentProject.my_role === 'admin');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function toggleMemberRole(memberId, newRole) {
+  try {
+    await api('PUT', `/projects/${currentProject.id}/members/${memberId}/role`, { role: newRole });
+    currentProject = await api('GET', `/projects/${currentProject.id}`);
+    toast('Role updated', 'success');
+    renderProjectDetail(currentProject, currentTasks, currentProject.my_role === 'admin');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function deleteProject() {
+  if (!confirm('Delete this project and all its tasks? This cannot be undone.')) return;
+  try {
+    await api('DELETE', `/projects/${currentProject.id}`);
+    projects = projects.filter(p => p.id !== currentProject.id);
+    renderProjectNav();
+    toast('Project deleted', 'success');
+    showPage('projects');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ── NOTIFICATIONS ──
+async function loadNotifications() {
+  if (!token) return;
+  try {
+    notificationsState = await api('GET', '/notifications');
+    renderNotifications();
+  } catch (e) {}
+}
+
+function renderNotifications() {
+  const badge = document.getElementById('notif-badge');
+  const panel = document.getElementById('notif-panel');
+  if (!badge || !panel) return;
+  const unread = notificationsState.unread_count || 0;
+  badge.textContent = unread > 99 ? '99+' : String(unread);
+  badge.classList.toggle('hidden', unread === 0);
+  const items = notificationsState.items || [];
+  panel.innerHTML = `
+    <div class="notif-header">
+      <div class="notif-title">Notifications</div>
+      <button class="notif-read-all" onclick="markAllNotificationsRead()">Mark all read</button>
+    </div>
+    ${items.length ? items.map(n => `
+      <div class="notif-item ${n.is_read ? '' : 'unread'}" onclick="openNotification(${n.id}, ${n.project_id}, ${n.task_id || 'null'})">
+        <div class="notif-message">${esc(n.message)}</div>
+        <div class="notif-time">${formatApiDateTime(n.created_at)}</div>
+      </div>
+    `).join('') : `<div class="notif-empty">No notifications yet</div>`}
+  `;
+}
+
+function toggleNotifications() {
+  const panel = document.getElementById('notif-panel');
+  if (!panel) return;
+  panel.classList.toggle('open');
+}
+
+function handleOutsideNotificationClick(event) {
+  const panel = document.getElementById('notif-panel');
+  const bellWrap = document.querySelector('.notif-wrap');
+  if (!panel || !bellWrap) return;
+  if (!panel.classList.contains('open')) return;
+  if (bellWrap.contains(event.target)) return;
+  panel.classList.remove('open');
+}
+
+async function markAllNotificationsRead() {
+  try {
+    await api('PUT', '/notifications/read-all');
+    await loadNotifications();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function openNotification(notificationId, projectId, taskId) {
+  try {
+    await api('PUT', `/notifications/${notificationId}/read`);
+    await loadNotifications();
+    document.getElementById('notif-panel').classList.remove('open');
+    await showProjectDetail(projectId);
+    if (taskId) openTaskDetail(taskId);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── MODAL HELPERS ──
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(id, event) {
+  if (event && event.target !== document.getElementById(id)) return;
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ── TOAST ──
+let toastTimeout;
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = (type === 'success' ? '✓ ' : '✕ ') + msg;
+  el.className = `show ${type}`;
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ── UTILS ──
+function setContent(html) {
+  document.getElementById('main-content').innerHTML = html;
+}
+
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function parseApiDate(dateString) {
+  if (!dateString) return null;
+  const hasTimezone = /([zZ]|[+-]\d{2}:\d{2})$/.test(dateString);
+  return new Date(hasTimezone ? dateString : `${dateString}Z`);
+}
+
+function formatApiDateTime(dateString) {
+  const dt = parseApiDate(dateString);
+  if (!dt || Number.isNaN(dt.getTime())) return '';
+  return dt.toLocaleString();
+}
+
+function formatApiDateOnly(dateString) {
+  const dt = parseApiDate(dateString);
+  if (!dt || Number.isNaN(dt.getTime())) return '';
+  return dt.toLocaleDateString();
+}
+
+function toDateTimeLocalValue(dateObj) {
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  const hours = String(dateObj.getHours()).padStart(2, '0');
+  const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+function statusLabel(s) {
+  return { todo: 'To Do', in_progress: 'In Progress', done: 'Done' }[s] || s;
+}
+</script>
+</body>
+</html>
