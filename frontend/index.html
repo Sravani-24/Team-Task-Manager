@@ -1466,8 +1466,25 @@ function openCreateTaskModal() {
   document.getElementById('task-priority').value = 'medium';
   document.getElementById('task-status').value = 'todo';
   document.getElementById('task-due').value = '';
+  setTaskEditMode(true);
   populateAssignees();
   openModal('modal-create-task');
+}
+
+function setTaskEditMode(canFullEdit) {
+  const titleEl = document.getElementById('task-title');
+  const descEl = document.getElementById('task-desc');
+  const priorityEl = document.getElementById('task-priority');
+  const statusEl = document.getElementById('task-status');
+  const assigneeEl = document.getElementById('task-assignee');
+  const dueEl = document.getElementById('task-due');
+
+  titleEl.readOnly = !canFullEdit;
+  descEl.readOnly = !canFullEdit;
+  priorityEl.disabled = !canFullEdit;
+  assigneeEl.disabled = !canFullEdit;
+  dueEl.disabled = !canFullEdit;
+  statusEl.disabled = false;
 }
 
 function populateAssignees(selectedId) {
@@ -1486,8 +1503,11 @@ function populateAssignees(selectedId) {
 
 async function submitTask() {
   const title = document.getElementById('task-title').value.trim();
-  if (!title) { toast('Title is required', 'error'); return; }
-  const body = {
+  const isAdmin = currentProject?.my_role === 'admin';
+  if (!editingTaskId && !title) { toast('Title is required', 'error'); return; }
+  const body = (!isAdmin && editingTaskId) ? {
+    status: document.getElementById('task-status').value
+  } : {
     title,
     description: document.getElementById('task-desc').value.trim(),
     priority: document.getElementById('task-priority').value,
@@ -1639,6 +1659,7 @@ function openEditTaskModal(taskId) {
   } else {
     document.getElementById('task-due').value = '';
   }
+  setTaskEditMode(currentProject?.my_role === 'admin');
   populateAssignees(task.assignee_id);
   openModal('modal-create-task');
 }

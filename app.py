@@ -614,24 +614,30 @@ def update_task(project_id, task_id):
     data = request.get_json()
     old_status = task.status
     old_assignee_id = task.assignee_id
-    if 'title' in data and data['title'].strip():
-        task.title = data['title'].strip()
-    if 'description' in data:
-        task.description = data['description']
-    if 'status' in data and data['status'] in ('todo', 'in_progress', 'done'):
+    if role == 'member':
+        # Members are only allowed to move task status.
+        if 'status' not in data or data.get('status') not in ('todo', 'in_progress', 'done'):
+            return jsonify({'error': 'Members can only update task status'}), 400
         task.status = data['status']
-    if 'priority' in data and data['priority'] in ('low', 'medium', 'high'):
-        task.priority = data['priority']
-    if 'assignee_id' in data:
-        task.assignee_id = data['assignee_id']
-    if 'due_date' in data:
-        if data['due_date']:
-            try:
-                task.due_date = datetime.fromisoformat(data['due_date'].replace('Z', '+00:00'))
-            except:
-                pass
-        else:
-            task.due_date = None
+    else:
+        if 'title' in data and data['title'].strip():
+            task.title = data['title'].strip()
+        if 'description' in data:
+            task.description = data['description']
+        if 'status' in data and data['status'] in ('todo', 'in_progress', 'done'):
+            task.status = data['status']
+        if 'priority' in data and data['priority'] in ('low', 'medium', 'high'):
+            task.priority = data['priority']
+        if 'assignee_id' in data:
+            task.assignee_id = data['assignee_id']
+        if 'due_date' in data:
+            if data['due_date']:
+                try:
+                    task.due_date = datetime.fromisoformat(data['due_date'].replace('Z', '+00:00'))
+                except:
+                    pass
+            else:
+                task.due_date = None
     task.updated_at = datetime.now(timezone.utc)
     actor = User.query.get(user_id)
     actor_name = actor.name if actor else 'A member'
