@@ -4,6 +4,7 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timezone, timedelta
+from sqlalchemy import or_
 import re
 import os
 
@@ -741,7 +742,24 @@ def get_project_activity(project_id):
     _, err, code = require_project_access(project_id, user_id)
     if err:
         return err, code
-    logs = ActivityLog.query.filter_by(project_id=project_id).order_by(ActivityLog.created_at.desc()).limit(120).all()
+    role = get_project_role(project_id, user_id)
+    if role == 'admin':
+        logs = ActivityLog.query.filter_by(project_id=project_id).order_by(ActivityLog.created_at.desc()).limit(120).all()
+    else:
+        related_task_ids = [
+            t.id for t in Task.query.filter(
+                Task.project_id == project_id,
+                or_(Task.assignee_id == user_id, Task.created_by == user_id)
+            ).all()
+        ]
+        logs = ActivityLog.query.filter(
+            ActivityLog.project_id == project_id,
+            or_(
+                ActivityLog.actor_id == user_id,
+                ActivityLog.target_user_id == user_id,
+                ActivityLog.task_id.in_(related_task_ids) if related_task_ids else False
+            )
+        ).order_by(ActivityLog.created_at.desc()).limit(120).all()
     return jsonify([l.to_dict() for l in logs])
 
 # ─── Notification Routes ───────────────────────────────────────────────────────
@@ -785,22 +803,30 @@ def mark_all_notifications_read():
 def dashboard():
     user_id = int(get_jwt_identity())
     memberships = ProjectMember.query.filter_by(user_id=user_id).all()
+    role_by_project = {m.project_id: m.role for m in memberships}
     project_ids = [m.project_id for m in memberships]
     all_tasks = Task.query.filter(Task.project_id.in_(project_ids)).all() if project_ids else []
-    my_tasks = [t for t in all_tasks if t.assignee_id == user_id]
-    overdue = []
+
+    visible_tasks = []
     for t in all_tasks:
+        role = role_by_project.get(t.project_id)
+        if role == 'admin' or t.assignee_id == user_id or t.created_by == user_id:
+            visible_tasks.append(t)
+
+    my_tasks = [t for t in visible_tasks if t.assignee_id == user_id]
+    overdue = []
+    for t in visible_tasks:
         if is_task_overdue(t):
             overdue.append(t)
     return jsonify({
         'total_projects': len(project_ids),
-        'total_tasks': len(all_tasks),
+        'total_tasks': len(visible_tasks),
         'my_tasks': len(my_tasks),
-        'todo': len([t for t in all_tasks if t.status == 'todo']),
-        'in_progress': len([t for t in all_tasks if t.status == 'in_progress']),
-        'done': len([t for t in all_tasks if t.status == 'done']),
+        'todo': len([t for t in visible_tasks if t.status == 'todo']),
+        'in_progress': len([t for t in visible_tasks if t.status == 'in_progress']),
+        'done': len([t for t in visible_tasks if t.status == 'done']),
         'overdue': len(overdue),
-        'recent_tasks': [t.to_dict() for t in sorted(all_tasks, key=lambda x: x.updated_at, reverse=True)[:5]],
+        'recent_tasks': [t.to_dict() for t in sorted(visible_tasks, key=lambda x: x.updated_at, reverse=True)[:5]],
         'overdue_tasks': [t.to_dict() for t in overdue[:5]]
     })
 
